@@ -309,69 +309,190 @@ const clamp = (v, mn, mx) => Math.max(mn, Math.min(mx, v));
 
 function drawSky() {
   const g = cx.createLinearGradient(0, 0, 0, H * 0.4);
-  g.addColorStop(0, '#0a0a1a');
-  g.addColorStop(0.5, '#0f1528');
+  g.addColorStop(0, '#050510');
+  g.addColorStop(0.3, '#0a0a1a');
+  g.addColorStop(0.6, '#0f1528');
   g.addColorStop(1, '#1a2a1a');
   cx.fillStyle = g;
   cx.fillRect(0, 0, W, H * 0.4);
+
+  // Stadium roof silhouette
+  cx.fillStyle = '#08080f';
+  cx.beginPath();
+  cx.moveTo(0, H * 0.05);
+  cx.quadraticCurveTo(W * 0.15, H * 0.02, W * 0.25, H * 0.06);
+  cx.lineTo(W * 0.25, H * 0.14);
+  cx.lineTo(0, H * 0.14);
+  cx.closePath();
+  cx.fill();
+  cx.beginPath();
+  cx.moveTo(W, H * 0.05);
+  cx.quadraticCurveTo(W * 0.85, H * 0.02, W * 0.75, H * 0.06);
+  cx.lineTo(W * 0.75, H * 0.14);
+  cx.lineTo(W, H * 0.14);
+  cx.closePath();
+  cx.fill();
+  // Roof center span
+  cx.beginPath();
+  cx.moveTo(W * 0.25, H * 0.06);
+  cx.quadraticCurveTo(W * 0.5, H * 0.0, W * 0.75, H * 0.06);
+  cx.lineTo(W * 0.75, H * 0.08);
+  cx.quadraticCurveTo(W * 0.5, H * 0.03, W * 0.25, H * 0.08);
+  cx.closePath();
+  cx.fill();
+
   // Stars
   const seed = 42;
-  for (let i = 0; i < 60; i++) {
+  for (let i = 0; i < 80; i++) {
     const sx = ((seed * (i + 1) * 7919) % 10000) / 10000 * W;
-    const sy = ((seed * (i + 1) * 104729) % 10000) / 10000 * H * 0.25;
+    const sy = ((seed * (i + 1) * 104729) % 10000) / 10000 * H * 0.15;
     const br = 0.3 + 0.7 * Math.sin(Date.now() * 0.001 + i);
-    cx.fillStyle = `rgba(255,255,255,${0.2 + br * 0.3})`;
-    cx.fillRect(sx, sy, 1.5, 1.5);
+    const sz = 0.5 + Math.random() * 1.5;
+    cx.fillStyle = `rgba(255,255,255,${0.15 + br * 0.25})`;
+    cx.beginPath();
+    cx.arc(sx, sy, sz, 0, Math.PI * 2);
+    cx.fill();
   }
 }
 
 function drawStadium() {
   const groundY = H * 0.42;
   const horizonY = H * 0.28;
-  // Stands
+
+  // Upper stands (darker, further away)
+  cx.fillStyle = '#111120';
+  cx.fillRect(0, horizonY - H * 0.14, W, H * 0.10);
+
+  // Lower stands
   cx.fillStyle = '#1a1a2a';
-  cx.fillRect(0, horizonY - H * 0.08, W, H * 0.22);
-  // Crowd in stands
+  cx.fillRect(0, horizonY - H * 0.04, W, H * 0.18);
+
+  // Crowd in upper stands
   const crowdBrightness = 0.3 + G.crowdExcitement * 0.7;
-  for (let row = 0; row < 12; row++) {
-    for (let col = 0; col < 60; col++) {
-      const px = col / 60 * W;
-      const py = horizonY - H * 0.06 + row * 4;
+  const now = Date.now();
+  for (let row = 0; row < 8; row++) {
+    for (let col = 0; col < 80; col++) {
+      const px = col / 80 * W;
+      const py = horizonY - H * 0.12 + row * 3;
       const hue = ((col * 37 + row * 73) % 360);
-      const bright = crowdBrightness * (0.5 + 0.5 * Math.sin(Date.now() * 0.002 + col * 0.3 + row));
-      cx.fillStyle = `hsla(${hue}, 60%, ${30 + bright * 30}%, ${0.6 + bright * 0.4})`;
-      cx.fillRect(px, py, W / 60 - 1, 3);
+      // Wave effect: offset by column position for a wave
+      const wavePhase = now * 0.003 + col * 0.15;
+      const wave = Math.sin(wavePhase) * 0.5 + 0.5;
+      const bright = crowdBrightness * (0.3 + 0.4 * wave);
+      cx.fillStyle = `hsla(${hue}, 50%, ${20 + bright * 20}%, ${0.4 + bright * 0.3})`;
+      cx.fillRect(px, py, W / 80 - 1, 2.5);
     }
   }
-  // Stadium rim
-  cx.fillStyle = '#2a2a3a';
-  cx.fillRect(0, horizonY + H * 0.1, W, 4);
 
-  // Stadium lights
-  const lightPositions = [W * 0.1, W * 0.3, W * 0.7, W * 0.9];
-  lightPositions.forEach(lx => {
-    // Pole
-    cx.fillStyle = '#444';
-    cx.fillRect(lx - 2, horizonY - H * 0.12, 4, H * 0.14);
-    // Light
+  // Crowd in lower stands (closer, brighter, bigger)
+  for (let row = 0; row < 16; row++) {
+    for (let col = 0; col < 70; col++) {
+      const px = col / 70 * W;
+      const py = horizonY - H * 0.02 + row * 4;
+      const hue = ((col * 53 + row * 97) % 360);
+      const wavePhase = now * 0.002 + col * 0.12 + row * 0.5;
+      const wave = Math.sin(wavePhase) * 0.5 + 0.5;
+      const bright = crowdBrightness * (0.4 + 0.6 * wave);
+      cx.fillStyle = `hsla(${hue}, 60%, ${25 + bright * 35}%, ${0.5 + bright * 0.5})`;
+      cx.fillRect(px, py, W / 70 - 1, 3.5);
+    }
+  }
+
+  // Stadium rim / barrier
+  cx.fillStyle = '#2a2a3a';
+  cx.fillRect(0, horizonY + H * 0.1, W, 5);
+  cx.fillStyle = '#333345';
+  cx.fillRect(0, horizonY + H * 0.1, W, 2);
+
+  // Advertising boards along pitch edge
+  const adY = groundY - 6;
+  const adH = 12;
+  cx.fillStyle = '#1a1a3a';
+  cx.fillRect(0, adY, W, adH);
+  const adColors = ['#e53935','#1e88e5','#43a047','#ff9800','#8e24aa','#00acc1'];
+  const adW = W / 8;
+  for (let i = 0; i < 8; i++) {
+    cx.fillStyle = adColors[i % adColors.length];
+    cx.globalAlpha = 0.7;
+    cx.fillRect(i * adW + 2, adY + 2, adW - 4, adH - 4);
+    cx.globalAlpha = 1;
+    // Ad text hint
     cx.fillStyle = '#fff';
-    cx.fillRect(lx - 10, horizonY - H * 0.13, 20, 6);
-    // Glow
-    const grd = cx.createRadialGradient(lx, horizonY - H * 0.12, 5, lx, horizonY - H * 0.12, 80);
-    grd.addColorStop(0, 'rgba(255,255,200,0.3)');
+    cx.font = `${Math.max(7, adH - 6)}px sans-serif`;
+    cx.textAlign = 'center';
+    const adTexts = ['SPORTS','ENERGY','FLY','GOAL TV','TURBO','KICK','PRO','ULTRA'];
+    cx.fillText(adTexts[i], i * adW + adW / 2, adY + adH - 3);
+  }
+  cx.textAlign = 'start';
+
+  // Stadium lights - bigger, more realistic towers with multiple panels
+  const lightPositions = [W * 0.08, W * 0.28, W * 0.72, W * 0.92];
+  lightPositions.forEach(lx => {
+    // Tower base (wider at bottom)
+    cx.fillStyle = '#3a3a3a';
+    cx.beginPath();
+    cx.moveTo(lx - 5, horizonY + H * 0.02);
+    cx.lineTo(lx + 5, horizonY + H * 0.02);
+    cx.lineTo(lx + 3, horizonY - H * 0.15);
+    cx.lineTo(lx - 3, horizonY - H * 0.15);
+    cx.closePath();
+    cx.fill();
+    // Tower highlight
+    cx.fillStyle = '#4a4a4a';
+    cx.fillRect(lx - 1, horizonY - H * 0.15, 2, H * 0.17);
+
+    // Multiple light panels
+    for (let p = 0; p < 3; p++) {
+      const panelX = lx - 18 + p * 12;
+      const panelY = horizonY - H * 0.16 - p * 2;
+      // Panel housing
+      cx.fillStyle = '#555';
+      cx.fillRect(panelX - 6, panelY, 12, 5);
+      // Light surface
+      cx.fillStyle = '#ffffcc';
+      cx.fillRect(panelX - 5, panelY + 1, 10, 3);
+    }
+
+    // Large glow
+    const grd = cx.createRadialGradient(lx, horizonY - H * 0.14, 8, lx, horizonY - H * 0.14, 120);
+    grd.addColorStop(0, 'rgba(255,255,220,0.35)');
+    grd.addColorStop(0.5, 'rgba(255,255,200,0.1)');
     grd.addColorStop(1, 'rgba(255,255,200,0)');
     cx.fillStyle = grd;
     cx.beginPath();
-    cx.arc(lx, horizonY - H * 0.12, 80, 0, Math.PI * 2);
+    cx.arc(lx, horizonY - H * 0.14, 120, 0, Math.PI * 2);
+    cx.fill();
+
+    // Lens flare effect near lights
+    const flareAlpha = 0.08 + 0.04 * Math.sin(now * 0.002 + lx);
+    cx.fillStyle = `rgba(255,255,240,${flareAlpha})`;
+    cx.beginPath();
+    cx.arc(lx, horizonY - H * 0.14, 30, 0, Math.PI * 2);
+    cx.fill();
+    cx.fillStyle = `rgba(255,200,100,${flareAlpha * 0.5})`;
+    cx.beginPath();
+    cx.arc(lx + 15, horizonY - H * 0.11, 12, 0, Math.PI * 2);
+    cx.fill();
+    cx.beginPath();
+    cx.arc(lx - 10, horizonY - H * 0.17, 8, 0, Math.PI * 2);
     cx.fill();
   });
 
-  // Pitch - perspective
-  const g = cx.createLinearGradient(0, groundY, 0, H);
-  g.addColorStop(0, '#1e5c1e');
-  g.addColorStop(0.5, '#2d7a2d');
-  g.addColorStop(1, '#1a5c1a');
-  cx.fillStyle = g;
+  // Atmospheric fog/haze between pitch and stands
+  const fogGrad = cx.createLinearGradient(0, horizonY + H * 0.05, 0, groundY);
+  fogGrad.addColorStop(0, 'rgba(180,200,220,0.08)');
+  fogGrad.addColorStop(0.5, 'rgba(180,200,220,0.04)');
+  fogGrad.addColorStop(1, 'rgba(180,200,220,0)');
+  cx.fillStyle = fogGrad;
+  cx.fillRect(0, horizonY + H * 0.05, W, groundY - horizonY - H * 0.05);
+
+  // Pitch - perspective with floodlight gradient
+  const gPitch = cx.createLinearGradient(0, groundY, 0, H);
+  gPitch.addColorStop(0, '#1a5a1a');
+  gPitch.addColorStop(0.3, '#267a26');
+  gPitch.addColorStop(0.6, '#2d8a2d');
+  gPitch.addColorStop(1, '#1a5c1a');
+  cx.fillStyle = gPitch;
   cx.beginPath();
   cx.moveTo(0, groundY);
   cx.lineTo(W, groundY);
@@ -379,14 +500,39 @@ function drawStadium() {
   cx.lineTo(0, H);
   cx.fill();
 
-  // Pitch stripes
-  for (let i = 0; i < 12; i++) {
-    const y1 = groundY + (H - groundY) * (i / 12);
-    const y2 = groundY + (H - groundY) * ((i + 1) / 12);
+  // Floodlight lighting effect on pitch (brighter center)
+  const floodGrad = cx.createRadialGradient(W * 0.5, groundY + H * 0.1, 10, W * 0.5, groundY + H * 0.1, W * 0.6);
+  floodGrad.addColorStop(0, 'rgba(255,255,230,0.07)');
+  floodGrad.addColorStop(0.5, 'rgba(255,255,230,0.03)');
+  floodGrad.addColorStop(1, 'rgba(0,0,0,0.08)');
+  cx.fillStyle = floodGrad;
+  cx.fillRect(0, groundY, W, H - groundY);
+
+  // Mowing stripes with proper shading
+  for (let i = 0; i < 14; i++) {
+    const y1 = groundY + (H - groundY) * (i / 14);
+    const y2 = groundY + (H - groundY) * ((i + 1) / 14);
     if (i % 2 === 0) {
-      cx.fillStyle = 'rgba(255,255,255,0.03)';
-      cx.fillRect(0, y1, W, y2 - y1);
+      cx.fillStyle = 'rgba(255,255,255,0.035)';
+    } else {
+      cx.fillStyle = 'rgba(0,0,0,0.025)';
     }
+    cx.fillRect(0, y1, W, y2 - y1);
+  }
+
+  // Grass blade hints at the bottom edge
+  cx.strokeStyle = 'rgba(50,140,50,0.3)';
+  cx.lineWidth = 1;
+  const seed2 = 123;
+  for (let i = 0; i < 120; i++) {
+    const gx = ((seed2 * (i + 1) * 3571) % 10000) / 10000 * W;
+    const gy = H - Math.random() * 20;
+    const gh = 4 + Math.random() * 8;
+    const lean = (Math.random() - 0.5) * 4;
+    cx.beginPath();
+    cx.moveTo(gx, gy);
+    cx.lineTo(gx + lean, gy - gh);
+    cx.stroke();
   }
 
   // White lines - simplified perspective
@@ -419,10 +565,29 @@ function drawStadium() {
   cx.closePath();
   cx.stroke();
 
+  // Halfway line (perspective)
+  const halfY = groundY + (H - groundY) * 0.85;
+  cx.strokeStyle = 'rgba(255,255,255,0.4)';
+  cx.lineWidth = 2;
+  cx.beginPath();
+  cx.moveTo(0, halfY);
+  cx.lineTo(W, halfY);
+  cx.stroke();
+
+  // Center circle (ellipse in perspective)
+  cx.beginPath();
+  cx.ellipse(goalCX, halfY, W * 0.12, (H - groundY) * 0.08, 0, 0, Math.PI * 2);
+  cx.stroke();
+
   // Penalty spot
   cx.fillStyle = 'rgba(255,255,255,0.6)';
   cx.beginPath();
   cx.arc(goalCX, groundY + (H - groundY) * 0.4, 3, 0, Math.PI * 2);
+  cx.fill();
+
+  // Center spot
+  cx.beginPath();
+  cx.arc(goalCX, halfY, 3, 0, Math.PI * 2);
   cx.fill();
 }
 
@@ -432,26 +597,35 @@ function drawGoal() {
   const postH = (H - groundY) * 0.22;
   const goalTopY = groundY + (H - groundY) * 0.03;
   const postWidth = W * 0.2;
+  const postThick = 6;
 
-  // Net (back)
-  cx.strokeStyle = 'rgba(255,255,255,0.15)';
+  // Net (back) - finer mesh with depth perspective and sag
   cx.lineWidth = 0.5;
-  const netDepth = 12;
-  for (let i = 0; i <= 10; i++) {
-    const t = i / 10;
-    // Vertical net lines
+  const netDepth = 16;
+  const netCols = 20;
+  const netRows = 12;
+  for (let i = 0; i <= netCols; i++) {
+    const t = i / netCols;
     const nx = goalCX - postWidth + t * postWidth * 2;
+    const backOffset = -netDepth * (0.5 - t) * 0.3;
+    cx.strokeStyle = `rgba(255,255,255,${0.08 + t * 0.04 * (t < 0.5 ? 1 : -1) + 0.04})`;
     cx.beginPath();
     cx.moveTo(nx, goalTopY);
-    cx.lineTo(nx - netDepth * (0.5 - t) * 0.3, goalTopY + postH);
+    // Slight sag in the middle of vertical lines
+    const sagX = (nx + backOffset * 0.5);
+    const sagY = goalTopY + postH * 0.55 + Math.sin(t * Math.PI) * 4;
+    cx.quadraticCurveTo(sagX, sagY, nx + backOffset, goalTopY + postH);
     cx.stroke();
   }
-  for (let i = 0; i <= 5; i++) {
-    const t = i / 5;
+  for (let i = 0; i <= netRows; i++) {
+    const t = i / netRows;
     const ny = goalTopY + t * postH;
+    // Horizontal lines with slight sag in center
+    const sag = Math.sin(t * Math.PI) * 2 + Math.sin(0.5 * Math.PI) * 3 * t;
+    cx.strokeStyle = `rgba(255,255,255,${0.06 + (1 - t) * 0.08})`;
     cx.beginPath();
     cx.moveTo(goalCX - postWidth, ny);
-    cx.lineTo(goalCX + postWidth, ny);
+    cx.quadraticCurveTo(goalCX, ny + sag, goalCX + postWidth, ny);
     cx.stroke();
   }
 
@@ -470,23 +644,54 @@ function drawGoal() {
     cx.stroke();
   }
 
-  // Posts
-  cx.strokeStyle = '#fff';
-  cx.lineWidth = 4;
+  // Post shadows on pitch
+  cx.fillStyle = 'rgba(0,0,0,0.15)';
+  // Left post shadow
   cx.beginPath();
   cx.moveTo(goalCX - postWidth, goalTopY + postH);
-  cx.lineTo(goalCX - postWidth, goalTopY);
-  cx.lineTo(goalCX + postWidth, goalTopY);
-  cx.lineTo(goalCX + postWidth, goalTopY + postH);
-  cx.stroke();
+  cx.lineTo(goalCX - postWidth - 15, goalTopY + postH + 20);
+  cx.lineTo(goalCX - postWidth - 12, goalTopY + postH + 20);
+  cx.lineTo(goalCX - postWidth + 3, goalTopY + postH);
+  cx.closePath();
+  cx.fill();
+  // Right post shadow
+  cx.beginPath();
+  cx.moveTo(goalCX + postWidth, goalTopY + postH);
+  cx.lineTo(goalCX + postWidth + 15, goalTopY + postH + 20);
+  cx.lineTo(goalCX + postWidth + 12, goalTopY + postH + 20);
+  cx.lineTo(goalCX + postWidth - 3, goalTopY + postH);
+  cx.closePath();
+  cx.fill();
+
+  // Left post (cylindrical gradient)
+  let postGrad = cx.createLinearGradient(goalCX - postWidth - postThick / 2, 0, goalCX - postWidth + postThick / 2, 0);
+  postGrad.addColorStop(0, '#ccc');
+  postGrad.addColorStop(0.3, '#fff');
+  postGrad.addColorStop(0.7, '#eee');
+  postGrad.addColorStop(1, '#aaa');
+  cx.fillStyle = postGrad;
+  cx.fillRect(goalCX - postWidth - postThick / 2, goalTopY, postThick, postH);
+
+  // Right post (cylindrical gradient)
+  postGrad = cx.createLinearGradient(goalCX + postWidth - postThick / 2, 0, goalCX + postWidth + postThick / 2, 0);
+  postGrad.addColorStop(0, '#ccc');
+  postGrad.addColorStop(0.3, '#fff');
+  postGrad.addColorStop(0.7, '#eee');
+  postGrad.addColorStop(1, '#aaa');
+  cx.fillStyle = postGrad;
+  cx.fillRect(goalCX + postWidth - postThick / 2, goalTopY, postThick, postH);
+
+  // Crossbar (cylindrical gradient)
+  let barGrad = cx.createLinearGradient(0, goalTopY - postThick / 2, 0, goalTopY + postThick / 2);
+  barGrad.addColorStop(0, '#fff');
+  barGrad.addColorStop(0.4, '#eee');
+  barGrad.addColorStop(1, '#aaa');
+  cx.fillStyle = barGrad;
+  cx.fillRect(goalCX - postWidth - postThick / 2, goalTopY - postThick / 2, postWidth * 2 + postThick, postThick);
 
   // Crossbar highlight
-  cx.strokeStyle = 'rgba(255,255,255,0.3)';
-  cx.lineWidth = 2;
-  cx.beginPath();
-  cx.moveTo(goalCX - postWidth, goalTopY - 1);
-  cx.lineTo(goalCX + postWidth, goalTopY - 1);
-  cx.stroke();
+  cx.fillStyle = 'rgba(255,255,255,0.4)';
+  cx.fillRect(goalCX - postWidth, goalTopY - postThick / 2, postWidth * 2, 1.5);
 }
 
 function drawKeeper() {
@@ -498,6 +703,16 @@ function drawKeeper() {
 
   let kx = goalCX + G.keeper.x;
   let ky = goalTopY + postH * 0.7;
+
+  // Shadow on ground
+  cx.save();
+  cx.translate(kx, ky + 18 * keeperScale);
+  cx.scale(keeperScale, keeperScale * 0.3);
+  cx.fillStyle = 'rgba(0,0,0,0.25)';
+  cx.beginPath();
+  cx.ellipse(0, 0, 18, 10, 0, 0, Math.PI * 2);
+  cx.fill();
+  cx.restore();
 
   cx.save();
   cx.translate(kx, ky);
@@ -512,48 +727,103 @@ function drawKeeper() {
     cx.rotate(rot);
   }
 
-  // Body
+  // Neck
+  cx.fillStyle = '#c4935f';
+  cx.fillRect(-3, -22, 6, 5);
+
+  // Body / Jersey (wider shoulders)
   cx.fillStyle = '#ff6f00';
-  cx.fillRect(-8, -20, 16, 24);
-  // Head
-  cx.fillStyle = '#d4a373';
   cx.beginPath();
-  cx.arc(0, -26, 8, 0, Math.PI * 2);
+  cx.moveTo(-12, -20);
+  cx.lineTo(12, -20);
+  cx.lineTo(10, 4);
+  cx.lineTo(-10, 4);
+  cx.closePath();
   cx.fill();
+  // Jersey shading
+  cx.fillStyle = 'rgba(0,0,0,0.15)';
+  cx.fillRect(-10, -10, 20, 14);
+  // Jersey number
+  cx.fillStyle = '#fff';
+  cx.font = 'bold 12px sans-serif';
+  cx.textAlign = 'center';
+  cx.fillText('1', 0, -4);
+  cx.textAlign = 'start';
+
+  // Head with skin shading
+  const headGrad = cx.createRadialGradient(-2, -30, 2, 0, -26, 9);
+  headGrad.addColorStop(0, '#e0b88a');
+  headGrad.addColorStop(1, '#b8844a');
+  cx.fillStyle = headGrad;
+  cx.beginPath();
+  cx.arc(0, -26, 9, 0, Math.PI * 2);
+  cx.fill();
+  // Hair
+  cx.fillStyle = '#2a1a0a';
+  cx.beginPath(); cx.arc(0, -30, 8, Math.PI, Math.PI * 2); cx.fill();
+
   // Arms
-  cx.strokeStyle = '#ff6f00';
-  cx.lineWidth = 4;
+  cx.lineWidth = 5;
   if (G.keeper.diving) {
-    // Arms stretched
+    // Arms stretched - jersey color
+    cx.strokeStyle = '#ff6f00';
     cx.beginPath();
-    cx.moveTo(-8, -14);
-    cx.lineTo(-8 - G.keeper.diveDir * 20, -30);
+    cx.moveTo(-12, -16);
+    cx.lineTo(-12 - G.keeper.diveDir * 22, -32);
     cx.stroke();
     cx.beginPath();
-    cx.moveTo(8, -14);
-    cx.lineTo(8 - G.keeper.diveDir * 15, -25);
+    cx.moveTo(12, -16);
+    cx.lineTo(12 - G.keeper.diveDir * 18, -28);
     cx.stroke();
-    // Gloves
-    cx.fillStyle = '#fff';
+    // Goalkeeper gloves (bigger, neon)
+    cx.fillStyle = '#76ff03';
     cx.beginPath();
-    cx.arc(-8 - G.keeper.diveDir * 20, -30, 5, 0, Math.PI * 2);
+    cx.arc(-12 - G.keeper.diveDir * 22, -32, 7, 0, Math.PI * 2);
+    cx.fill();
+    cx.fillStyle = '#64dd17';
+    cx.beginPath();
+    cx.arc(-12 - G.keeper.diveDir * 22, -32, 5, 0, Math.PI * 2);
     cx.fill();
   } else {
-    cx.beginPath();
-    cx.moveTo(-8, -14); cx.lineTo(-18, -8);
-    cx.stroke();
-    cx.beginPath();
-    cx.moveTo(8, -14); cx.lineTo(18, -8);
-    cx.stroke();
-    cx.fillStyle = '#fff';
-    cx.beginPath(); cx.arc(-18, -8, 4, 0, Math.PI * 2); cx.fill();
-    cx.beginPath(); cx.arc(18, -8, 4, 0, Math.PI * 2); cx.fill();
+    cx.strokeStyle = '#ff6f00';
+    cx.beginPath(); cx.moveTo(-12, -16); cx.lineTo(-20, -6); cx.stroke();
+    cx.beginPath(); cx.moveTo(12, -16); cx.lineTo(20, -6); cx.stroke();
+    // Gloves (big, bright)
+    cx.fillStyle = '#76ff03';
+    cx.beginPath(); cx.arc(-20, -6, 6, 0, Math.PI * 2); cx.fill();
+    cx.fillStyle = '#64dd17';
+    cx.beginPath(); cx.arc(-20, -6, 4, 0, Math.PI * 2); cx.fill();
+    cx.fillStyle = '#76ff03';
+    cx.beginPath(); cx.arc(20, -6, 6, 0, Math.PI * 2); cx.fill();
+    cx.fillStyle = '#64dd17';
+    cx.beginPath(); cx.arc(20, -6, 4, 0, Math.PI * 2); cx.fill();
   }
+
+  // Shorts
+  cx.fillStyle = '#222';
+  cx.fillRect(-9, 4, 18, 10);
+
+  // Socks
+  cx.fillStyle = '#ff6f00';
+  cx.fillRect(-7, 14, 5, 8);
+  cx.fillRect(2, 14, 5, 8);
+
   // Legs
   cx.strokeStyle = '#222';
   cx.lineWidth = 4;
-  cx.beginPath(); cx.moveTo(-4, 4); cx.lineTo(-6, 18); cx.stroke();
-  cx.beginPath(); cx.moveTo(4, 4); cx.lineTo(6, 18); cx.stroke();
+  cx.beginPath(); cx.moveTo(-4, 14); cx.lineTo(-5, 22); cx.stroke();
+  cx.beginPath(); cx.moveTo(4, 14); cx.lineTo(5, 22); cx.stroke();
+
+  // Boots
+  cx.fillStyle = '#111';
+  cx.fillRect(-8, 21, 7, 4);
+  cx.fillRect(2, 21, 7, 4);
+  // Studs hint
+  cx.fillStyle = '#666';
+  cx.fillRect(-7, 24, 2, 1);
+  cx.fillRect(-4, 24, 2, 1);
+  cx.fillRect(3, 24, 2, 1);
+  cx.fillRect(6, 24, 2, 1);
 
   cx.restore();
 }
@@ -565,154 +835,304 @@ function drawBicycleKickPlayer(player) {
   const px = a.x || W * 0.5;
   const py = a.y || groundY;
 
+  // Shadow on ground
+  cx.save();
+  cx.translate(px, py + 20);
+  cx.scale(1.2, 0.3);
+  cx.fillStyle = 'rgba(0,0,0,0.3)';
+  cx.beginPath();
+  cx.ellipse(0, 0, 22, 10, 0, 0, Math.PI * 2);
+  cx.fill();
+  cx.restore();
+
   cx.save();
   cx.translate(px, py);
 
   const scale = 1.2;
   cx.scale(scale, scale);
 
-  if (a.phase === 'idle' || a.phase === 'run') {
-    // Standing / running player
-    const runT = a.phase === 'run' ? Math.sin(a.t * 8) : 0;
-    // Body
-    cx.fillStyle = player.jersey;
-    if (player.striped) {
-      cx.fillRect(-10, -40, 20, 28);
-      cx.fillStyle = player.jersey2;
-      for (let s = 0; s < 5; s++) {
-        cx.fillRect(-10, -40 + s * 11, 20, 4);
-      }
-    } else {
-      cx.fillRect(-10, -40, 20, 28);
+  // Helper to draw skin with shading
+  function skinGrad(cx2, x, y, r) {
+    const sg = cx2.createRadialGradient(x - r * 0.3, y - r * 0.3, r * 0.1, x, y, r);
+    sg.addColorStop(0, '#e8c49a');
+    sg.addColorStop(0.7, '#d4a373');
+    sg.addColorStop(1, '#b8844a');
+    return sg;
+  }
+
+  // Helper to draw jersey body with proper shape
+  function drawJersey(pl) {
+    // Wider shoulders, tapered waist
+    cx.beginPath();
+    cx.moveTo(-12, -38);
+    cx.lineTo(12, -38);
+    cx.lineTo(10, -12);
+    cx.lineTo(-10, -12);
+    cx.closePath();
+    cx.fillStyle = pl.jersey;
+    cx.fill();
+    if (pl.striped) {
+      cx.save();
+      cx.clip();
+      cx.fillStyle = pl.jersey2;
+      for (let s = 0; s < 6; s++) cx.fillRect(-12, -38 + s * 10, 24, 4);
+      cx.restore();
+      // Re-draw outline clip
+      cx.beginPath();
+      cx.moveTo(-12, -38);
+      cx.lineTo(12, -38);
+      cx.lineTo(10, -12);
+      cx.lineTo(-10, -12);
+      cx.closePath();
     }
-    // Head
-    cx.fillStyle = '#d4a373';
-    cx.beginPath(); cx.arc(0, -48, 9, 0, Math.PI * 2); cx.fill();
+    // Jersey shading (sides darker)
+    cx.fillStyle = 'rgba(0,0,0,0.1)';
+    cx.fillRect(-12, -38, 4, 26);
+    cx.fillRect(8, -38, 4, 26);
+    // Shirt number
+    cx.fillStyle = pl.jersey2 || '#fff';
+    cx.font = 'bold 11px sans-serif';
+    cx.textAlign = 'center';
+    cx.fillText('10', 0, -20);
+    cx.textAlign = 'start';
+  }
+
+  function drawHead() {
+    // Neck
+    cx.fillStyle = '#c4935f';
+    cx.fillRect(-3, -42, 6, 5);
+    // Head with gradient skin
+    cx.fillStyle = skinGrad(cx, 0, -48, 10);
+    cx.beginPath(); cx.arc(0, -48, 10, 0, Math.PI * 2); cx.fill();
     // Hair
     cx.fillStyle = '#2a1a0a';
-    cx.beginPath(); cx.arc(0, -52, 8, Math.PI, Math.PI * 2); cx.fill();
+    cx.beginPath(); cx.arc(0, -52, 9, Math.PI * 1.1, Math.PI * 1.9); cx.fill();
+    // Eye hint
+    cx.fillStyle = '#222';
+    cx.fillRect(-4, -49, 2, 1.5);
+    cx.fillRect(2, -49, 2, 1.5);
+  }
+
+  function drawSocks(ly1, ly2, lx1, lx2) {
+    cx.strokeStyle = player.jersey;
+    cx.lineWidth = 6;
+    cx.beginPath(); cx.moveTo(lx1, ly1 + 8); cx.lineTo(lx1, ly1 + 16); cx.stroke();
+    cx.beginPath(); cx.moveTo(lx2, ly2 + 8); cx.lineTo(lx2, ly2 + 16); cx.stroke();
+  }
+
+  function drawBoots(bx1, by1, bx2, by2) {
+    cx.fillStyle = '#111';
+    cx.fillRect(bx1 - 4, by1, 9, 4);
+    cx.fillRect(bx2 - 4, by2, 9, 4);
+    // Studs
+    cx.fillStyle = '#555';
+    cx.fillRect(bx1 - 3, by1 + 3, 2, 1);
+    cx.fillRect(bx1 + 1, by1 + 3, 2, 1);
+    cx.fillRect(bx2 - 3, by2 + 3, 2, 1);
+    cx.fillRect(bx2 + 1, by2 + 3, 2, 1);
+  }
+
+  if (a.phase === 'idle' || a.phase === 'run') {
+    const runT = a.phase === 'run' ? Math.sin(a.t * 8) : 0;
+    drawJersey(player);
+    drawHead();
     // Shorts
     cx.fillStyle = player.shorts;
     cx.fillRect(-9, -12, 18, 12);
-    // Legs
-    cx.strokeStyle = '#d4a373';
+    // Legs (skin)
+    const skinCol = skinGrad(cx, 0, 10, 20);
+    cx.strokeStyle = skinCol;
     cx.lineWidth = 5;
-    cx.beginPath(); cx.moveTo(-5, 0); cx.lineTo(-5 + runT * 6, 18); cx.stroke();
-    cx.beginPath(); cx.moveTo(5, 0); cx.lineTo(5 - runT * 6, 18); cx.stroke();
+    const l1x = -5 + runT * 6;
+    const l2x = 5 - runT * 6;
+    cx.beginPath(); cx.moveTo(-5, 0); cx.lineTo(l1x, 18); cx.stroke();
+    cx.beginPath(); cx.moveTo(5, 0); cx.lineTo(l2x, 18); cx.stroke();
+    // Socks
+    cx.strokeStyle = player.jersey;
+    cx.lineWidth = 6;
+    cx.beginPath(); cx.moveTo(l1x, 12); cx.lineTo(l1x, 18); cx.stroke();
+    cx.beginPath(); cx.moveTo(l2x, 12); cx.lineTo(l2x, 18); cx.stroke();
     // Boots
-    cx.fillStyle = '#111';
-    cx.fillRect(-8 + runT * 6, 16, 8, 4);
-    cx.fillRect(2 - runT * 6, 16, 8, 4);
-    // Arms
-    cx.strokeStyle = '#d4a373';
+    drawBoots(l1x, 17, l2x, 17);
+    // Arms (skin)
+    cx.strokeStyle = skinGrad(cx, -15, -28, 15);
     cx.lineWidth = 4;
-    cx.beginPath(); cx.moveTo(-10, -36); cx.lineTo(-16, -20 + runT * 4); cx.stroke();
-    cx.beginPath(); cx.moveTo(10, -36); cx.lineTo(16, -20 - runT * 4); cx.stroke();
+    cx.beginPath(); cx.moveTo(-12, -36); cx.lineTo(-18, -20 + runT * 4); cx.stroke();
+    cx.beginPath(); cx.moveTo(12, -36); cx.lineTo(18, -20 - runT * 4); cx.stroke();
   }
   else if (a.phase === 'jump' || a.phase === 'kick') {
-    // Bicycle kick animation
     const kt = a.t;
     const jumpH = Math.sin(Math.min(kt * 1.5, 1) * Math.PI) * 60;
     const rot = a.phase === 'kick' ? Math.min((kt - 0.3) * 3, 1) * -2.5 : kt * -0.8;
-    const cy = -jumpH;
+    const cy2 = -jumpH;
 
-    cx.translate(0, cy);
+    cx.translate(0, cy2);
     cx.rotate(rot);
 
-    // Body
-    cx.fillStyle = player.jersey;
-    if (player.striped) {
-      cx.fillRect(-10, -40, 20, 28);
-      cx.fillStyle = player.jersey2;
-      for (let s = 0; s < 5; s++) cx.fillRect(-10, -40 + s * 11, 20, 4);
-    } else {
-      cx.fillRect(-10, -40, 20, 28);
-    }
-    // Head
-    cx.fillStyle = '#d4a373';
-    cx.beginPath(); cx.arc(0, -48, 9, 0, Math.PI * 2); cx.fill();
-    cx.fillStyle = '#2a1a0a';
-    cx.beginPath(); cx.arc(0, -52, 8, Math.PI, Math.PI * 2); cx.fill();
+    drawJersey(player);
+    drawHead();
     // Shorts
     cx.fillStyle = player.shorts;
     cx.fillRect(-9, -12, 18, 12);
-    // Kicking leg (extended for bicycle kick)
-    cx.strokeStyle = '#d4a373';
+    // Kicking leg
+    cx.strokeStyle = skinGrad(cx, 10, -10, 20);
     cx.lineWidth = 5;
     const legExt = a.phase === 'kick' ? Math.min((kt - 0.3) * 4, 1) : 0;
-    cx.beginPath(); cx.moveTo(0, 0); cx.lineTo(5 + legExt * 20, -10 - legExt * 25); cx.stroke();
-    // Boot
+    const kickLegX = 5 + legExt * 20;
+    const kickLegY = -10 - legExt * 25;
+    cx.beginPath(); cx.moveTo(0, 0); cx.lineTo(kickLegX, kickLegY); cx.stroke();
+    // Boot on kicking leg
     cx.fillStyle = '#111';
     cx.save();
-    cx.translate(5 + legExt * 20, -10 - legExt * 25);
-    cx.fillRect(-4, -3, 10, 5);
+    cx.translate(kickLegX, kickLegY);
+    cx.fillRect(-5, -3, 11, 5);
+    // Studs
+    cx.fillStyle = '#555';
+    cx.fillRect(-4, 1, 2, 1); cx.fillRect(0, 1, 2, 1); cx.fillRect(4, 1, 2, 1);
     cx.restore();
     // Other leg
-    cx.beginPath(); cx.moveTo(0, 0); cx.lineTo(-8, 12 - legExt * 5); cx.stroke();
+    const otherX = -8;
+    const otherY = 12 - legExt * 5;
+    cx.strokeStyle = skinGrad(cx, otherX, otherY, 15);
+    cx.lineWidth = 5;
+    cx.beginPath(); cx.moveTo(0, 0); cx.lineTo(otherX, otherY); cx.stroke();
     cx.fillStyle = '#111';
-    cx.fillRect(-12, 10 - legExt * 5, 8, 4);
-    // Arms spread
-    cx.strokeStyle = '#d4a373';
+    cx.fillRect(otherX - 4, otherY - 2, 9, 4);
+    // Arms spread (skin)
+    cx.strokeStyle = skinGrad(cx, -20, -25, 15);
     cx.lineWidth = 4;
-    cx.beginPath(); cx.moveTo(-10, -36); cx.lineTo(-25, -20); cx.stroke();
-    cx.beginPath(); cx.moveTo(10, -36); cx.lineTo(20, -15); cx.stroke();
+    cx.beginPath(); cx.moveTo(-12, -36); cx.lineTo(-27, -20); cx.stroke();
+    cx.beginPath(); cx.moveTo(12, -36); cx.lineTo(22, -15); cx.stroke();
+    // Hands
+    cx.fillStyle = '#d4a373';
+    cx.beginPath(); cx.arc(-27, -20, 3, 0, Math.PI * 2); cx.fill();
+    cx.beginPath(); cx.arc(22, -15, 3, 0, Math.PI * 2); cx.fill();
   }
   else if (a.phase === 'land') {
     const lt = Math.min(a.t, 1);
-    // Landing - getting up
     cx.translate(0, -5 + lt * 5);
     cx.rotate(-0.3 * (1 - lt));
-    cx.fillStyle = player.jersey;
-    cx.fillRect(-10, -40, 20, 28);
-    cx.fillStyle = '#d4a373';
-    cx.beginPath(); cx.arc(0, -48, 9, 0, Math.PI * 2); cx.fill();
-    cx.fillStyle = '#2a1a0a';
-    cx.beginPath(); cx.arc(0, -52, 8, Math.PI, Math.PI * 2); cx.fill();
+    drawJersey(player);
+    drawHead();
     cx.fillStyle = player.shorts;
     cx.fillRect(-9, -12, 18, 12);
-    cx.strokeStyle = '#d4a373'; cx.lineWidth = 5;
+    cx.strokeStyle = skinGrad(cx, 0, 10, 20); cx.lineWidth = 5;
     cx.beginPath(); cx.moveTo(-5, 0); cx.lineTo(-7, 18); cx.stroke();
     cx.beginPath(); cx.moveTo(5, 0); cx.lineTo(7, 18); cx.stroke();
-    cx.fillStyle = '#111';
-    cx.fillRect(-11, 16, 8, 4); cx.fillRect(3, 16, 8, 4);
-    cx.strokeStyle = '#d4a373'; cx.lineWidth = 4;
-    cx.beginPath(); cx.moveTo(-10, -36); cx.lineTo(-16, -20); cx.stroke();
-    cx.beginPath(); cx.moveTo(10, -36); cx.lineTo(16, -20); cx.stroke();
+    // Socks
+    cx.strokeStyle = player.jersey; cx.lineWidth = 6;
+    cx.beginPath(); cx.moveTo(-7, 12); cx.lineTo(-7, 18); cx.stroke();
+    cx.beginPath(); cx.moveTo(7, 12); cx.lineTo(7, 18); cx.stroke();
+    drawBoots(-7, 17, 7, 17);
+    cx.strokeStyle = skinGrad(cx, -15, -28, 15); cx.lineWidth = 4;
+    cx.beginPath(); cx.moveTo(-12, -36); cx.lineTo(-18, -20); cx.stroke();
+    cx.beginPath(); cx.moveTo(12, -36); cx.lineTo(18, -20); cx.stroke();
   }
 
   cx.restore();
 }
 
 function drawBall(x, y, radius, spin) {
+  // Shadow underneath ball
+  cx.save();
+  cx.translate(x + 3, y + radius + 4);
+  cx.scale(1, 0.35);
+  cx.fillStyle = 'rgba(0,0,0,0.25)';
+  cx.beginPath();
+  cx.arc(0, 0, radius * 0.9, 0, Math.PI * 2);
+  cx.fill();
+  cx.restore();
+
   cx.save();
   cx.translate(x, y);
   cx.rotate(spin || 0);
-  // Main ball
-  cx.fillStyle = '#fff';
+
+  // Main ball with gradient
+  const ballGrad = cx.createRadialGradient(-radius * 0.3, -radius * 0.3, radius * 0.1, 0, 0, radius);
+  ballGrad.addColorStop(0, '#ffffff');
+  ballGrad.addColorStop(0.4, '#f5f5f5');
+  ballGrad.addColorStop(0.8, '#e0e0e0');
+  ballGrad.addColorStop(1, '#bbb');
+  cx.fillStyle = ballGrad;
   cx.beginPath();
   cx.arc(0, 0, radius, 0, Math.PI * 2);
   cx.fill();
-  // Pentagon pattern
-  cx.fillStyle = '#222';
+
+  // Panel seam lines (hexagon/pentagon pattern)
+  cx.strokeStyle = 'rgba(0,0,0,0.15)';
+  cx.lineWidth = 0.5;
+  // Draw hexagonal seams connecting pentagons
   for (let i = 0; i < 5; i++) {
     const angle = (i / 5) * Math.PI * 2 - Math.PI / 2;
-    const px = Math.cos(angle) * radius * 0.5;
-    const py = Math.sin(angle) * radius * 0.5;
+    const px2 = Math.cos(angle) * radius * 0.52;
+    const py2 = Math.sin(angle) * radius * 0.52;
+    const nextAngle = ((i + 1) / 5) * Math.PI * 2 - Math.PI / 2;
+    const nx = Math.cos(nextAngle) * radius * 0.52;
+    const ny = Math.sin(nextAngle) * radius * 0.52;
+    // Seam from center area to pentagon
+    cx.beginPath();
+    cx.moveTo(px2 * 0.35, py2 * 0.35);
+    cx.lineTo(px2, py2);
+    cx.stroke();
+    // Seam between pentagons
+    cx.beginPath();
+    cx.moveTo(px2, py2);
+    cx.lineTo((px2 + nx) / 2 * 1.3, (py2 + ny) / 2 * 1.3);
+    cx.lineTo(nx, ny);
+    cx.stroke();
+    // Outer seam to edge
+    cx.beginPath();
+    cx.moveTo(px2, py2);
+    cx.lineTo(Math.cos(angle) * radius * 0.92, Math.sin(angle) * radius * 0.92);
+    cx.stroke();
+  }
+
+  // Dark pentagons (classic soccer ball look)
+  cx.fillStyle = 'rgba(30,30,30,0.85)';
+  // Center pentagon
+  cx.beginPath();
+  for (let j = 0; j < 5; j++) {
+    const a2 = (j / 5) * Math.PI * 2 - Math.PI / 2;
+    const sx2 = Math.cos(a2) * radius * 0.2;
+    const sy2 = Math.sin(a2) * radius * 0.2;
+    if (j === 0) cx.moveTo(sx2, sy2); else cx.lineTo(sx2, sy2);
+  }
+  cx.closePath();
+  cx.fill();
+
+  // Outer pentagons
+  for (let i = 0; i < 5; i++) {
+    const angle = (i / 5) * Math.PI * 2 - Math.PI / 2;
+    const px3 = Math.cos(angle) * radius * 0.62;
+    const py3 = Math.sin(angle) * radius * 0.62;
     cx.beginPath();
     for (let j = 0; j < 5; j++) {
-      const a2 = (j / 5) * Math.PI * 2 - Math.PI / 2;
-      const sx = px + Math.cos(a2) * radius * 0.22;
-      const sy = py + Math.sin(a2) * radius * 0.22;
-      if (j === 0) cx.moveTo(sx, sy); else cx.lineTo(sx, sy);
+      const a2 = (j / 5) * Math.PI * 2 - Math.PI / 2 + angle * 0.1;
+      const sx3 = px3 + Math.cos(a2) * radius * 0.17;
+      const sy3 = py3 + Math.sin(a2) * radius * 0.17;
+      if (j === 0) cx.moveTo(sx3, sy3); else cx.lineTo(sx3, sy3);
     }
     cx.closePath();
     cx.fill();
   }
-  // Highlight
-  cx.fillStyle = 'rgba(255,255,255,0.4)';
+
+  // Glossy shine highlight
+  const shineGrad = cx.createRadialGradient(-radius * 0.3, -radius * 0.3, 0, -radius * 0.3, -radius * 0.3, radius * 0.5);
+  shineGrad.addColorStop(0, 'rgba(255,255,255,0.6)');
+  shineGrad.addColorStop(0.5, 'rgba(255,255,255,0.15)');
+  shineGrad.addColorStop(1, 'rgba(255,255,255,0)');
+  cx.fillStyle = shineGrad;
   cx.beginPath();
-  cx.arc(-radius * 0.25, -radius * 0.25, radius * 0.35, 0, Math.PI * 2);
+  cx.arc(0, 0, radius, 0, Math.PI * 2);
   cx.fill();
+
+  // Rim light
+  cx.strokeStyle = 'rgba(0,0,0,0.15)';
+  cx.lineWidth = 0.8;
+  cx.beginPath();
+  cx.arc(0, 0, radius, 0, Math.PI * 2);
+  cx.stroke();
+
   cx.restore();
 }
 
@@ -741,6 +1161,42 @@ function drawParticles() {
       cx.fill();
     }
   });
+}
+
+function drawAtmosphere() {
+  // Vignette darkening at edges
+  // Top/bottom vignette
+  const vigTop = cx.createLinearGradient(0, 0, 0, H * 0.15);
+  vigTop.addColorStop(0, 'rgba(0,0,0,0.4)');
+  vigTop.addColorStop(1, 'rgba(0,0,0,0)');
+  cx.fillStyle = vigTop;
+  cx.fillRect(0, 0, W, H * 0.15);
+
+  const vigBot = cx.createLinearGradient(0, H * 0.85, 0, H);
+  vigBot.addColorStop(0, 'rgba(0,0,0,0)');
+  vigBot.addColorStop(1, 'rgba(0,0,0,0.35)');
+  cx.fillStyle = vigBot;
+  cx.fillRect(0, H * 0.85, W, H * 0.15);
+
+  // Side vignettes
+  const vigLeft = cx.createLinearGradient(0, 0, W * 0.12, 0);
+  vigLeft.addColorStop(0, 'rgba(0,0,0,0.3)');
+  vigLeft.addColorStop(1, 'rgba(0,0,0,0)');
+  cx.fillStyle = vigLeft;
+  cx.fillRect(0, 0, W * 0.12, H);
+
+  const vigRight = cx.createLinearGradient(W * 0.88, 0, W, 0);
+  vigRight.addColorStop(0, 'rgba(0,0,0,0)');
+  vigRight.addColorStop(1, 'rgba(0,0,0,0.3)');
+  cx.fillStyle = vigRight;
+  cx.fillRect(W * 0.88, 0, W * 0.12, H);
+
+  // Subtle haze in the distant part of the pitch
+  const hazeGrad = cx.createLinearGradient(0, H * 0.35, 0, H * 0.5);
+  hazeGrad.addColorStop(0, 'rgba(150,170,200,0.06)');
+  hazeGrad.addColorStop(1, 'rgba(150,170,200,0)');
+  cx.fillStyle = hazeGrad;
+  cx.fillRect(0, H * 0.35, W, H * 0.15);
 }
 
 // ===================== PARTICLE SYSTEM =====================
@@ -1104,8 +1560,8 @@ function render() {
 
     // Cross ball
     if (G.phase === 'cross' || G.phase === 'timing') {
-      drawBallTrail(G.crossBall.trail, 8);
-      drawBall(G.crossBall.x, G.crossBall.y, 8, G.crossBall.spin);
+      drawBallTrail(G.crossBall.trail, 14);
+      drawBall(G.crossBall.x, G.crossBall.y, 14, G.crossBall.spin);
     }
 
     // Shot ball
@@ -1113,7 +1569,7 @@ function render() {
       // Draw smaller as ball goes toward goal (perspective)
       const groundY = H * 0.42;
       const distRatio = 1 - Math.max(0, (G.shotBall.y - groundY) / (H * 0.4 - groundY));
-      const ballR = lerp(8, 4, clamp(distRatio, 0, 1));
+      const ballR = lerp(14, 7, clamp(distRatio, 0, 1));
       drawBallTrail(G.shotBall.trail, ballR);
       drawBall(G.shotBall.x, G.shotBall.y, ballR, G.shotBall.spin);
     }
@@ -1123,6 +1579,7 @@ function render() {
     drawBicycleKickPlayer(player);
 
     drawParticles();
+    drawAtmosphere();
   } else if (G.screen === 'title') {
     drawSky();
     drawStadium();
@@ -1136,10 +1593,12 @@ function render() {
       });
     }
     drawParticles();
+    drawAtmosphere();
   } else if (G.screen === 'select') {
     drawSky();
     drawStadium();
     drawParticles();
+    drawAtmosphere();
   }
 
   cx.restore();
